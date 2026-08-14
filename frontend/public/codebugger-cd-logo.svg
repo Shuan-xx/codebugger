@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 176 120" role="img" aria-labelledby="title description">
+  <title id="title">CoDebugger top-view ladybug CD monogram</title>
+  <desc id="description">A top-view ladybug mark where a large C shell connects directly to a smaller D head with two eyes.</desc>
+  <defs>
+    <linearGradient id="shell" x1="10" y1="12" x2="109" y2="110" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#03cef4"/>
+      <stop offset="0.38" stop-color="#078cf4"/>
+      <stop offset="0.72" stop-color="#3457f1"/>
+      <stop offset="1" stop-color="#7540ed"/>
+    </linearGradient>
+    <linearGradient id="head" x1="96" y1="23" x2="162" y2="98" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#635cf5"/>
+      <stop offset="0.5" stop-color="#902bea"/>
+      <stop offset="1" stop-color="#dc06dd"/>
+    </linearGradient>
+    <linearGradient id="shell-shine" x1="21" y1="21" x2="91" y2="66" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffffff" stop-opacity="0.74"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-18%" y="-24%" width="148%" height="170%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#4030bc" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <!-- A soft inner shell makes the silhouette read as a beetle seen from above. -->
+    <ellipse cx="62" cy="60" rx="48" ry="39" fill="#dff6ff" opacity="0.72"/>
+
+    <!-- The large C is the shell. Its terminals are exactly at (102, 28) and (102, 92). -->
+    <path
+      d="M102 28C59 7 15 27 15 60s44 53 87 32"
+      fill="none"
+      stroke="url(#shell)"
+      stroke-width="27"
+      stroke-linecap="butt"
+      stroke-linejoin="round"
+    />
+    <path d="M87 26C54 16 25 32 24 56" fill="none" stroke="url(#shell-shine)" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+
+    <!-- Symmetric shell markings reinforce the top-view ladybug body. -->
+    <circle cx="45" cy="30" r="5.2" fill="#2842bd" opacity="0.46"/>
+    <circle cx="71" cy="28" r="4.5" fill="#3d43c7" opacity="0.42"/>
+    <circle cx="34" cy="60" r="5.6" fill="#2440b9" opacity="0.4"/>
+    <circle cx="45" cy="90" r="5.2" fill="#4934c1" opacity="0.43"/>
+    <circle cx="71" cy="92" r="4.5" fill="#5a31ca" opacity="0.4"/>
+    <path d="M25 60H92" fill="none" stroke="#3447bf" stroke-width="2.4" stroke-linecap="round" opacity="0.22"/>
+
+    <!-- The smaller D begins and ends at the same two points, joining the C without gaps. -->
+    <path
+      d="M102 28H119C145 28 161 41 161 60s-16 32-42 32H102V28Z"
+      fill="url(#head)"
+    />
+    <path d="M111 36H119C139 36 151 45 152 57" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" opacity="0.38"/>
+
+    <!-- A darker face panel preserves the D silhouette and carries the paired eyes. -->
+    <path d="M119 43C134 44 143 50 143 60s-9 16-24 17V43Z" fill="#4a277f" opacity="0.5"/>
+    <circle cx="144" cy="50.5" r="5.4" fill="#ffffff"/>
+    <circle cx="144" cy="69.5" r="5.4" fill="#ffffff"/>
+    <circle cx="146" cy="50.5" r="2.5" fill="#30205f"/>
+    <circle cx="146" cy="69.5" r="2.5" fill="#30205f"/>
+    <circle cx="145.2" cy="49.4" r="0.9" fill="#ffffff" opacity="0.92"/>
+    <circle cx="145.2" cy="68.4" r="0.9" fill="#ffffff" opacity="0.92"/>
+
+    <!-- Mirrored antennae establish the head as the front of a top-view insect. -->
+    <path d="M151 43C157 34 164 31 170 30" fill="none" stroke="#a21ee7" stroke-width="4" stroke-linecap="round"/>
+    <path d="M151 77C157 86 164 89 170 90" fill="none" stroke="#bd12e2" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="171" cy="29.8" r="3" fill="#a91ae6"/>
+    <circle cx="171" cy="90.2" r="3" fill="#ca0de0"/>
+
+    <!-- The shared neck line clarifies where the C shell becomes the D head. -->
+    <path d="M102 36V84" fill="none" stroke="#3825a3" stroke-width="3" stroke-linecap="round" opacity="0.24"/>
+  </g>
+</svg>
