@@ -66,6 +66,40 @@ class Settings(BaseSettings):
         le=8192,
         validation_alias="DEEPSEEK_MAX_TOKENS",
     )
+    context_max_bytes: int = Field(
+        default=8_388_608,
+        ge=1024,
+        le=52_428_800,
+        validation_alias="CONTEXT_MAX_BYTES",
+    )
+    context_prompt_max_chars: int = Field(
+        default=60_000,
+        ge=1000,
+        le=300_000,
+        validation_alias="CONTEXT_PROMPT_MAX_CHARS",
+    )
+    context_ttl_seconds: int = Field(
+        default=7200,
+        ge=300,
+        le=86400,
+        validation_alias="CONTEXT_TTL_SECONDS",
+    )
+    test_execution_enabled: bool = Field(
+        default=True,
+        validation_alias="TEST_EXECUTION_ENABLED",
+    )
+    test_timeout_seconds: int = Field(
+        default=45,
+        ge=5,
+        le=300,
+        validation_alias="TEST_TIMEOUT_SECONDS",
+    )
+    test_max_output_chars: int = Field(
+        default=12_000,
+        ge=1000,
+        le=100_000,
+        validation_alias="TEST_MAX_OUTPUT_CHARS",
+    )
 
     model_config = SettingsConfigDict(
         env_file=BACKEND_ROOT / ".env",

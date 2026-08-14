@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import RLock
 from typing import Literal
 
@@ -7,6 +7,13 @@ from pydantic import BaseModel, Field, SecretStr, field_validator
 from app.settings import Settings
 
 ProviderId = Literal["aliyun", "deepseek", "minimax", "xiaomi", "kimi", "zhipu"]
+AgentId = Literal["bughunter", "codeanalyst", "testrunner"]
+
+AGENT_NAMES: dict[AgentId, str] = {
+    "bughunter": "BugHunter",
+    "codeanalyst": "CodeAnalyst",
+    "testrunner": "TestRunner",
+}
 
 
 @dataclass(frozen=True)
@@ -82,6 +89,11 @@ class PublicModelConfig(BaseModel):
     providers: list[ProviderOption]
 
 
+class PublicAgentModelConfig(PublicModelConfig):
+    agent_id: AgentId
+    agent_name: str
+
+
 class ModelConfigUpdate(BaseModel):
     provider: ProviderId
     model: str | None = Field(default=None, min_length=1, max_length=120)
@@ -118,6 +130,13 @@ class ActiveModelConfig:
     max_tokens: int
 
 
+@dataclass
+class _AgentModelSlot:
+    active_provider: ProviderId = "deepseek"
+    api_keys: dict[ProviderId, SecretStr] = field(default_factory=dict)
+    models: dict[ProviderId, str] = field(default_factory=dict)
+
+
 def mask_api_key(api_key: SecretStr | None) -> str | None:
     if api_key is None:
         return None
@@ -133,15 +152,17 @@ class ModelConfigStore:
 
     def __init__(self, settings: Settings) -> None:
         self._lock = RLock()
-        self._active_provider: ProviderId = "deepseek"
-        self._api_keys: dict[ProviderId, SecretStr] = {}
-        if settings.deepseek_api_key is not None:
-            self._api_keys["deepseek"] = settings.deepseek_api_key
-        self._models: dict[ProviderId, str] = {
-            provider_id: definition.default_model
-            for provider_id, definition in PROVIDERS.items()
-        }
-        self._models["deepseek"] = settings.deepseek_model
+        self._slots: dict[AgentId, _AgentModelSlot] = {}
+        for agent_id in AGENT_NAMES:
+            keys: dict[ProviderId, SecretStr] = {}
+            if settings.deepseek_api_key is not None:
+                keys["deepseek"] = settings.deepseek_api_key
+            models = {
+                provider_id: definition.default_model
+                for provider_id, definition in PROVIDERS.items()
+            }
+            models["deepseek"] = settings.deepseek_model
+            self._slots[agent_id] = _AgentModelSlot(api_keys=keys, models=models)
         self._base_urls: dict[ProviderId, str] = {
             provider_id: definition.base_url
             for provider_id, definition in PROVIDERS.items()
@@ -151,40 +172,67 @@ class ModelConfigStore:
         self._temperature = settings.deepseek_temperature
         self._max_tokens = settings.deepseek_max_tokens
 
-    def update(self, update: ModelConfigUpdate) -> PublicModelConfig:
+    def update(
+        self,
+        update: ModelConfigUpdate,
+        agent_id: AgentId = "bughunter",
+    ) -> PublicModelConfig:
         with self._lock:
-            self._active_provider = update.provider
+            slot = self._slots[agent_id]
+            slot.active_provider = update.provider
             if update.model:
-                self._models[update.provider] = update.model
+                slot.models[update.provider] = update.model
             if update.api_key is not None:
-                self._api_keys[update.provider] = update.api_key
-            return self._public_locked()
+                slot.api_keys[update.provider] = update.api_key
+            return self._public_locked(agent_id)
 
-    def snapshot(self) -> ActiveModelConfig:
+    def snapshot(self, agent_id: AgentId = "bughunter") -> ActiveModelConfig:
         with self._lock:
-            provider = PROVIDERS[self._active_provider]
+            slot = self._slots[agent_id]
+            provider = PROVIDERS[slot.active_provider]
             return ActiveModelConfig(
                 provider=provider.id,
                 provider_name=provider.name,
                 base_url=self._base_urls[provider.id],
-                model=self._models[provider.id],
-                api_key=self._api_keys.get(provider.id),
+                model=slot.models[provider.id],
+                api_key=slot.api_keys.get(provider.id),
                 timeout_seconds=self._timeout_seconds,
                 temperature=self._temperature,
                 max_tokens=self._max_tokens,
             )
 
-    def public(self) -> PublicModelConfig:
+    def public(self, agent_id: AgentId = "bughunter") -> PublicModelConfig:
         with self._lock:
-            return self._public_locked()
+            return self._public_locked(agent_id)
 
-    def _public_locked(self) -> PublicModelConfig:
-        provider = PROVIDERS[self._active_provider]
-        api_key = self._api_keys.get(provider.id)
+    def public_agent(self, agent_id: AgentId) -> PublicAgentModelConfig:
+        with self._lock:
+            config = self._public_locked(agent_id)
+            return PublicAgentModelConfig(
+                **config.model_dump(),
+                agent_id=agent_id,
+                agent_name=AGENT_NAMES[agent_id],
+            )
+
+    def public_agents(self) -> list[PublicAgentModelConfig]:
+        with self._lock:
+            return [
+                PublicAgentModelConfig(
+                    **self._public_locked(agent_id).model_dump(),
+                    agent_id=agent_id,
+                    agent_name=agent_name,
+                )
+                for agent_id, agent_name in AGENT_NAMES.items()
+            ]
+
+    def _public_locked(self, agent_id: AgentId) -> PublicModelConfig:
+        slot = self._slots[agent_id]
+        provider = PROVIDERS[slot.active_provider]
+        api_key = slot.api_keys.get(provider.id)
         return PublicModelConfig(
             provider=provider.id,
             provider_name=provider.name,
-            model=self._models[provider.id],
+            model=slot.models[provider.id],
             base_url=self._base_urls[provider.id],
             configured=api_key is not None,
             api_key_masked=mask_api_key(api_key),
@@ -194,7 +242,7 @@ class ModelConfigStore:
                     name=item.name,
                     default_model=item.default_model,
                     accent=item.accent,
-                    configured=item.id in self._api_keys,
+                    configured=item.id in slot.api_keys,
                 )
                 for item in PROVIDERS.values()
             ],

@@ -15,9 +15,10 @@ import {
 } from 'lucide-react'
 import {
   ApiError,
-  saveModelConfig,
-  testModelConnection,
-  type ModelConfig,
+  saveAgentModelConfig,
+  testAgentModelConnection,
+  type AgentId,
+  type AgentModelConfig,
   type ProviderId,
   type ProviderOption,
 } from './api'
@@ -25,9 +26,11 @@ import {
 type ModelSettingsProps = {
   open: boolean
   online: boolean
-  config: ModelConfig | null
+  agentId: AgentId
+  agentName: string
+  config: AgentModelConfig | null
   onClose: () => void
-  onSaved: (config: ModelConfig) => void
+  onSaved: (config: AgentModelConfig) => void
 }
 
 const fallbackProviders: ProviderOption[] = [
@@ -48,7 +51,7 @@ const providerLogos: Record<ProviderId, string> = {
   zhipu: '/provider-logos/zhipu.png',
 }
 
-function ModelSettings({ open, online, config, onClose, onSaved }: ModelSettingsProps) {
+function ModelSettings({ open, online, agentId, agentName, config, onClose, onSaved }: ModelSettingsProps) {
   const providers = config?.providers ?? fallbackProviders
   const [provider, setProvider] = useState<ProviderId>(config?.provider ?? 'deepseek')
   const [model, setModel] = useState(config?.model ?? 'deepseek-v4-flash')
@@ -112,7 +115,7 @@ function ModelSettings({ open, online, config, onClose, onSaved }: ModelSettings
     setIsSaving(true)
     setFeedback(null)
     try {
-      const saved = await saveModelConfig({
+      const saved = await saveAgentModelConfig(agentId, {
         provider,
         model: model.trim(),
         ...(apiKey.trim() ? { api_key: apiKey.trim() } : {}),
@@ -142,7 +145,7 @@ function ModelSettings({ open, online, config, onClose, onSaved }: ModelSettings
     setIsTesting(true)
     setFeedback(null)
     try {
-      const result = await testModelConnection()
+      const result = await testAgentModelConnection(agentId)
       setTestResult({
         tone: 'success',
         title: '模型连接成功',
@@ -169,7 +172,7 @@ function ModelSettings({ open, online, config, onClose, onSaved }: ModelSettings
           <div className="settings-title-icon"><SlidersHorizontal size={20} /></div>
           <div>
             <span>MODEL SERVICE</span>
-            <h2 id="model-settings-title">模型服务设置</h2>
+            <h2 id="model-settings-title">{agentName} 专属模型</h2>
           </div>
           <button className="icon-button settings-close" type="button" onClick={onClose} aria-label="关闭设置">
             <X size={20} />
@@ -187,7 +190,7 @@ function ModelSettings({ open, online, config, onClose, onSaved }: ModelSettings
           <div className="setting-block">
             <div className="setting-label">
               <span>01</span>
-              <div><strong>选择 API 服务</strong><small>每家服务的密钥会独立保留</small></div>
+              <div><strong>选择 API 服务</strong><small>仅用于 {agentName} 的工作阶段</small></div>
             </div>
             <div className="provider-grid">
               {providers.map((item) => (
@@ -246,7 +249,7 @@ function ModelSettings({ open, online, config, onClose, onSaved }: ModelSettings
         </div>
 
         <footer className="settings-footer">
-          <div className="privacy-note"><ShieldCheck size={15} /><span>密钥不写入浏览器缓存，也不会明文回显</span></div>
+          <div className="privacy-note"><ShieldCheck size={15} /><span>{agentName} 的密钥不会写入浏览器缓存或明文回显</span></div>
           <div className="settings-actions">
             <button className="test-button" type="button" disabled={!online || isTesting || isSaving || !config?.configured} onClick={() => void handleTest()}>
               {isTesting ? <LoaderCircle className="spin" size={16} /> : <Server size={16} />}

@@ -2,5 +2,6 @@ fastapi[standard]
 httpx
 pydantic-settings
 python-dotenv
+python-multipart
 pytest
 ruff
